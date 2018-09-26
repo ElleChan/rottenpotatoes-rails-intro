@@ -11,6 +11,14 @@ class MoviesController < ApplicationController
   end
 
   def index
+    @all_ratings = Movie.get_ratings
+    if(params[:ratings_submit])
+        @checked_ratings = params[:ratings].keys unless params[:ratings].nil?
+    else
+        @checked_ratings = @all_ratings
+    end
+    
+    @movies = Movie.all
     if(params[:title_clicked])
         @movies = Movie.order(:title)
         @title_class = 'hilite'      
@@ -18,8 +26,7 @@ class MoviesController < ApplicationController
         @movies = Movie.order(:release_date)
         @release_class = 'hilite'
     else
-        @movies = Movie.all
-        
+        @movies = Movie.where('rating IN (?)', @checked_ratings)     
     end
   end
 
