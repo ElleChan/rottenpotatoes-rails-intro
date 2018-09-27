@@ -11,22 +11,45 @@ class MoviesController < ApplicationController
   end
 
   def index
+    redirect = false
+    
     @all_ratings = Movie.get_ratings
-    if(params[:ratings_submit])
-        @checked_ratings = params[:ratings].keys unless params[:ratings].nil?
+    if(params[:ratings_submit] && !params[:ratings].nil?)
+        @checked_ratings = params[:ratings].keys
+        session[:ratings] = params[:ratings]
+        session[:ratings_submit] = params[:ratings_submit]
+    elsif(!session[:ratings].nil?)
+         params[:ratings] = session[:ratings]
+         params[:ratings_submit] = session[:ratings_submit]
+        redirect = true
     else
         @checked_ratings = @all_ratings
     end
     
-    @movies = Movie.all
-    if(params[:title_clicked])
-        @movies = Movie.order(:title)
-        @title_class = 'hilite'      
-    elsif(params[:release_date_clicked])
-        @movies = Movie.order(:release_date)
-        @release_class = 'hilite'
+    if(params[:header_clicked])
+        header_clicked = params[:header_clicked]
+        session[:header_clicked] = header_clicked
+    elsif(session[:header_clicked])
+        header_clicked = session[:header_clicked]
+        redirect = true
     else
-        @movies = Movie.where('rating IN (?)', @checked_ratings)     
+        header_clicked = ""
+    end
+    
+    if(redirect)
+        flash.keep
+        session.clear
+        redirect_to movies_path({:header_clicked => header_clicked, :ratings => params[:ratings], :ratings_submit => params[:ratings_submit]})
+    else
+        if(header_clicked == "title")
+          @movies = Movie.where('rating IN (?)', @checked_ratings).order(:title)
+          @title_class = 'hilite'    
+      elsif(header_clicked == "release_date")
+          @movies = Movie.where('rating IN (?)', @checked_ratings).order(:release_date)
+          @release_class = 'hilite'
+      else
+          @movies = Movie.where('rating IN (?)', @checked_ratings)     
+      end
     end
   end
 
